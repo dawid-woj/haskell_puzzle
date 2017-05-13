@@ -7,7 +7,7 @@
 -- obrane zalozenie: minimalna obslugiwana plansza -> 3-wierszowa
 
 module ReadPuzzle
-( Plaster
+( Plaster(Plaster)
 , readPuzzle
 , checkPuzzle
 ) where
@@ -26,14 +26,16 @@ readPuzzle name = do
 
 checkPuzzle' :: Int -> Int -> [String] -> Bool
 checkPuzzle' _ _ [] = True
-checkPuzzle' n s (x:xs)
-	| n-s /= length x = False
-	| otherwise = if s == 0 then checkPuzzle' n 1 xs else checkPuzzle' n 0 xs
+checkPuzzle' n s (r:rs)
+	| n-s /= length r = False
+	| not (all (\a -> any (==a) ".ABCDEFG") r) = False
+	| otherwise = if s == 0 then checkPuzzle' n 1 rs else checkPuzzle' n 0 rs
 
 checkPuzzle :: Plaster -> Bool
 checkPuzzle (Plaster []) = False
-checkPuzzle (Plaster lst)
+checkPuzzle (Plaster rows)
 	| n < 3 = False
-	| otherwise = checkPuzzle' n 1 lst
-	where n = length lst
+	| n `mod` 2 == 0 = False
+	| otherwise = checkPuzzle' n 1 rows
+	where n = length rows
 
