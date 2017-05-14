@@ -9,7 +9,7 @@
 -- obrane zalozenie: minimalna obslugiwana plansza -> 3-wierszowa
 
 import ReadPuzzle
-import Data.List --sort, find, elemindex, elemIndices, \\ operator
+import Data.List --sort, find, elemindex, elemIndices, \\ operator, concat, nub
 import Data.Maybe --fromJust
 
 type Pos = (Int,Int)
@@ -48,6 +48,15 @@ getNearCumbs (Plaster []) _ = []
 getNearCumbs p (r,c)
 	| r `mod` 2 /= 0 = [getCumb p (x,y) | (x,y) <- [(r-1,c-1), (r-1,c), (r,c-1), (r,c+1), (r+1,c-1), (r+1,c)]]
 	| otherwise = [getCumb p (x,y) | (x,y) <- [(r-1,c), (r-1,c+1), (r,c-1), (r,c+1), (r+1,c), (r+1,c+1)]]
+
+--checkNeighbours2 :: Plaster -> Pos -> Bool
+--checkNeighbours2 p pos = not (isThereDuplicates (sort (getCumb p pos : getNearCumbs p pos)))
+
+getNearCumbs2 :: Plaster -> Pos -> String
+getNearCumbs2 (Plaster []) _ = []
+getNearCumbs2 p (r,c)
+	| r `mod` 2 /= 0 = (concat [getNearCumbs p (x,y) | (x,y) <- [(r-1,c-1), (r-1,c), (r,c-1), (r,c+1), (r+1,c-1), (r+1,c)]]) \\ (replicate 6 (getCumb p (r,c)))
+	| otherwise = (concat [getNearCumbs p (x,y) | (x,y) <- [(r-1,c), (r-1,c+1), (r,c-1), (r,c+1), (r+1,c), (r+1,c+1)]]) \\ (replicate 6 (getCumb p (r,c)))
 
 -- Plaster pos -> wartosc plastra na pozycji 'pos'
 getCumb :: Plaster -> Pos -> Char
@@ -97,26 +106,30 @@ solvePuzzle p
 
 --PuzzleState pos -> stan po uzupelnieniu znalezionego pustego plastra na pozycji 'pos'
 solve :: PuzzleState -> Maybe Pos -> PuzzleState
---solve p _ = p
-solve p@(PuzzleState _ 0 _) _ = (PuzzleState (puzzle p) (emptyCumbs p) True)
-solve p Nothing = (PuzzleState (puzzle p) (emptyCumbs p) True)
-solve p pos
-	| not (checkNeighbours (puzzle p) (fromJust pos)) = (PuzzleState (puzzle p) (emptyCumbs p) False)
-	| otherwise = tryOptions p pos options
+solve p Nothing
+	| emptyCumbs p > 0 || not (checkSolution (puzzle p)) = (PuzzleState (puzzle p) (emptyCumbs p) False)
+	| otherwise = (PuzzleState (puzzle p) (emptyCumbs p) True)
+solve p@(PuzzleState _ 0 _) pos = (PuzzleState (puzzle p) (emptyCumbs p) False)
+solve p pos = tryOptions p pos options
 	where
 		nears = getNearCumbs (puzzle p) (fromJust pos)
+--		nears = getNearCumbs2 (puzzle p) (fromJust pos)
 		options = "ABCDEFG" \\ nears
+
 tryOptions :: PuzzleState -> Maybe Pos -> String -> PuzzleState
-tryOptions p Nothing _ = (PuzzleState (puzzle p) (emptyCumbs p) True)
 tryOptions p _ [] = (PuzzleState (puzzle p) (emptyCumbs p) False)
+tryOptions p Nothing _
+	| emptyCumbs p > 0 || not (checkSolution (puzzle p)) = (PuzzleState (puzzle p) (emptyCumbs p) False)
+	| otherwise = (PuzzleState (puzzle p) (emptyCumbs p) True)
 tryOptions p pos (o:os)
-	| status slv = (PuzzleState (puzzle slv) (emptyCumbs slv) True)
-	| otherwise = tryOptions p pos os
+--	| elem o (getNearCumbs (puzzle p) (fromJust pos)) = try
+	| not (status opt) = tryOptions p pos os
+	| otherwise = opt
 	where
-		slv = solve (PuzzleState newPuzzle emptyCount False) newPos
-		newPos = findNextEmptyCumb (puzzle p) (fromJust pos)
 		newPuzzle = fillCumb (puzzle p) (fromJust pos) o
 		emptyCount = (emptyCumbs p) - 1
+		newPos = findNextEmptyCumb (puzzle p) (fromJust pos)
+		opt = solve (PuzzleState newPuzzle emptyCount False) newPos
 
 --Plaster -> czy dana plansza jest poprawnym rozwiazaniem?
 checkSolution :: Plaster -> Bool
