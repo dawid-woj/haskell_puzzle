@@ -1,0 +1,12 @@
+plansze/latwe1.txt
+Welcome to Honeycomb Puzzle!
+Give the name of puzzle level to solve: 
+Puzzle form and content are valid.
+Solving...
+Valid solution: False
+Puzzle:
+ C E F B 
+. . G A D 
+ . D . E 
+. . F . G 
+ B G A . 
