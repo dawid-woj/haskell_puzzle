@@ -36,9 +36,9 @@ countEmptyCumbs :: Plaster -> Int
 countEmptyCumbs (Plaster []) = 0
 countEmptyCumbs (Plaster (r:rs)) = length (elemIndices _EMPTY_CUMB r) + countEmptyCumbs (Plaster rs)
 
---checkNeighbours (plansza) (pozycja) -> czy sasiedzi plastra na danej pozycji sa odpowiedni (maja rozne wartosci)?
-checkNeighbours :: Plaster -> Pos -> Bool
-checkNeighbours p pos = not (isThereDuplicates (sort (getCumb p pos : getNearCumbs p pos)))
+--checkCloseNeighbours (plansza) (pozycja) -> czy sasiedzi plastra na danej pozycji sa odpowiedni (maja rozne wartosci)?
+checkCloseNeighbours :: Plaster -> Pos -> Bool
+checkCloseNeighbours p pos = not (isThereDuplicates (sort (getCumb p pos : getCloseNearCumbs p pos)))
 isThereDuplicates :: String -> Bool
 isThereDuplicates [] = False
 isThereDuplicates [x] = False
@@ -63,10 +63,10 @@ getNearCumbs p (r,c)
 																	        (r+2,c-1), (r+2,c),(r+2,c+1)
 																	 ]]
 
---getNearCumbs1 (plansza) (pozycja) -> lista wartosci plastrow sasiednich dla plastra na danej pozycji
-getNearCumbs1 :: Plaster -> Pos -> String
-getNearCumbs1 (Plaster []) _ = []
-getNearCumbs1 p (r,c)
+--getCloseNearCumbs (plansza) (pozycja) -> lista wartosci plastrow sasiednich dla plastra na danej pozycji
+getCloseNearCumbs :: Plaster -> Pos -> String
+getCloseNearCumbs (Plaster []) _ = []
+getCloseNearCumbs p (r,c)
 	| r `mod` 2 /= 0 = [getCumb p (x,y) | (x,y) <- [(r-1,c-1), (r-1,c), (r,c-1), (r,c+1), (r+1,c-1), (r+1,c)]]
 	| otherwise = [getCumb p (x,y) | (x,y) <- [(r-1,c), (r-1,c+1), (r,c-1), (r,c+1), (r+1,c), (r+1,c+1)]]
 
@@ -157,7 +157,7 @@ checkSolution (Plaster rows) = checkAt (Plaster rows) (0,0)
 checkAt :: Plaster -> Pos -> Bool
 checkAt (Plaster rows) (r,c)
 --	| trace ("checkAt: (r,c) = " ++ show (r,c)) False = undefined
-	| (getCumb (Plaster rows) (r,c)) == _EMPTY_CUMB || not (checkNeighbours (Plaster rows) (r,c)) = False
+	| (getCumb (Plaster rows) (r,c)) == _EMPTY_CUMB || not (checkCloseNeighbours (Plaster rows) (r,c)) = False
 	| (r == len-1) && (c == length (rows !! r) - 1) = True
 	| otherwise = checkAt (Plaster rows) (r',c')
 	where
@@ -180,11 +180,12 @@ puzzlePrettyRow (x:xs) = x : " " ++ puzzlePrettyRow xs
 
 main = do 
 	putStrLn "Welcome to Honeycomb Puzzle!"
-	putStrLn "Give the name of puzzle level to solve: "
+	putStrLn "Give the name of puzzle lvel to solve: "
 --	filename <- getLine
 -- TODO odkomentowac stale dodawanie planszy	
-	puzzle <- readPuzzle "plansze/latwe1.txt"
-	--putStrLn ("Puzzle: " ++ show puzzle)
+	puzzle <- readPuzzle "plansze/srednie9.txt"
+	--puzzle <- readPuzzle filename
+	putStrLn ("Puzzle: " ++ show puzzle)
 	if (checkPuzzle puzzle) then do
 		putStrLn "Puzzle form and content are valid."
 		putStrLn "Solving..."
@@ -222,7 +223,7 @@ getEmptyPositions (Plaster rows) (r, c)
 		c' = if c == length (rows !! r) - 1 then 0 else c+1
 		cumb = (getCumb (Plaster rows) (r, c))
 		len = length rows
-		neighboursCount = length ([n | n <- getNearCumbs1 (Plaster rows) (r,c), n /= _EMPTY_CUMB && n /= _NO_CUMB])
+		neighboursCount = length ([n | n <- getCloseNearCumbs (Plaster rows) (r,c), n /= _EMPTY_CUMB && n /= _NO_CUMB])
 
 
 
